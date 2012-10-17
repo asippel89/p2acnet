@@ -1,0 +1,23 @@
+
+from datetime import datetime
+
+class P2ACNETTester(object):
+    
+    def __init__(self, p2acnet_version_list):
+        for element in p2acnet_version_list:
+            self.test(element)
+
+    def test(self, p2acnet_test):
+        print "\tBegin test with", p2acnet_test, "class..."
+        tstart = datetime.now()
+        query1 = p2acnet_test.p2acnet('E:TCIP', '12-OCT-2012-12:30', '14-OCT-2012-12:30')
+        result1 = query1.parse_query()
+        tend = datetime.now()
+        dt = tend - tstart
+        print "\tQuery1 Time Spent:", dt
+        return
+
+if __name__ == '__main__':
+    import p2acnet, p2acnet2
+    p2acnet_version_list = [p2acnet, p2acnet2]
+    result = P2ACNETTester(p2acnet_version_list)

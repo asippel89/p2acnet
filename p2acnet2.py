@@ -1,4 +1,3 @@
-
 import requests
 import numpy as np
 import datetime as dt
@@ -6,17 +5,22 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
 class P2ACNET(object):
-    ''' This class responds to the full http query content and does splitlines() on it,
-        then goes through with the parsing.'''
+    '''
+    This class uses the iter_lines() requests method to iterate over each line of the returned content
+    instead of loading the whole response into memory and then performing operations on it. Also,
+    this version does not convert the datetime elements into matplotlib date types in parse_query. (This
+    seemed to be the cause of significant slowdown)
+        
+    '''
+
     def __init__(self, channel, start_time, end_time, node = 'fastest'):
         self.channel = channel
         self.start_time = start_time
         self.end_time = end_time
         self.node = node
-
-        r = requests.get('http://www-ad.fnal.gov/cgi-bin/acl.pl?acl=logger_get/double/node='\
-                             + self.node + '/start='+ self.start_time + '/end='+ self.end_time + '+' + self.channel)
-        self.raw = r.content.splitlines()
+        geturl = 'http://www-ad.fnal.gov/cgi-bin/acl.pl?acl=logger_get/double/node='\
+                       + self.node + '/start='+ self.start_time + '/end='+ self.end_time + '+' + self.channel
+        self.r = requests.get(geturl, prefetch=False)
         print "\tQuery to", self.channel, "successful"
         # print "HTTP get status: ", r.status_code
         # print "HTTP error? ", r.raise_for_status()
@@ -24,9 +28,9 @@ class P2ACNET(object):
     def parse_query(self):
         print "\tParsing returned content..."
         data_list = []
-        for element in self.raw:
+        for element in self.r.iter_lines():
             data_split = element.split('   ')
-            datetime_el = mdates.date2num(dt.datetime.strptime(data_split[0], '%d-%b-%Y %H:%M:%S.%f'))
+            datetime_el = dt.datetime.strptime(data_split[0], '%d-%b-%Y %H:%M:%S.%f')
             value_el = float(data_split[1].strip())
             data_list.append([datetime_el, value_el])
         self.data_array = np.array(data_list)

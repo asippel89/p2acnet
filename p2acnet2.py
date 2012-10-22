@@ -1,4 +1,4 @@
-
+ 
 import requests
 import numpy as np
 import datetime as dt
@@ -60,7 +60,7 @@ class P2ACNET(object):
                        + self.node + '/start='+ self.start_time + '/end='+ self.end_time + '+' + self.channel
         self.r = requests.get(geturl, prefetch=False)
         print "\tQuery to", self.channel, "successful"
-        # print "HTTP get status: ", r.status_code
+        print "HTTP get status: ", self.r.status_code
         # print "HTTP error? ", r.raise_for_status()
         
     def parse_query(self):

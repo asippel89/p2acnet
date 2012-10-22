@@ -64,6 +64,8 @@ class P2ACNET(object):
         self.r = requests.get(geturl)
         print "\t\tHTTP get status: ", self.r.status_code
         print "\t\tHTTP response content length:", len(self.r.content)
+        if int(self.r.status_code) != 200:
+            
         # print "HTTP error? ", r.raise_for_status()
         
     def parse_query(self):

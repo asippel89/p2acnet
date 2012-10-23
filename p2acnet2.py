@@ -122,8 +122,10 @@ class P2ACNET(object):
     
 if __name__ == '__main__':
     #-------------Test multiple channels using P2ACNETGroup-----------#
-    channel_list = ['E:TCIP', 'E:TNIP0', 'E:TNIP1', 'E:TNESIP']
-    query1 = P2ACNETGroup(channel_list, '20-OCT-2012-5:30', '23-OCT-2012-8:30')
+    channel_list = ['G:OUTTMP', 'G:WCHILL', 'G:HEATIX', 'G:DEWPNT']
+    start_time = '20-OCT-2012-5:30'
+    end_time = '20-OCT-2012-8:30'
+    query1 = P2ACNETGroup(channel_list, start_time, end_time)
     plot = query1.plot_group(query1.run_group())
     
     #------Test single plot-----------#

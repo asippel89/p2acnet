@@ -4,6 +4,7 @@ import numpy as np
 import datetime as dt
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+from collections import defaultdict
 
 class P2ACNETGroup(object):
     '''
@@ -27,22 +28,30 @@ class P2ACNETGroup(object):
             instance_dict[channel] = new_instance
         return instance_dict
 
-    def plot_group(self, instance_dict, title="", ylabel=""): # Is there any reason not to just call self.instanc_dict ?
+    def plot_group(self, title="", ylabel=""):
         '''
         This method iterates over the instance_dict, calling the plot_single method of the P2ACNET class for each instance
         of that class in the dictionary (basically each channel). The resulting plot has automatically scaled dates as well
         as a legend which shows the channels. A title and y-label can be supplied, though in future versions I hope to include
         automatic y-axis labeling based on queried channel units (along with subplots for channels of different units).
         '''
+        instance_dict = self.run_group()
         #-------------Decide How Many Subplots Based on Units--------------------#
-        # units_dict = {}
-        # for channel in instance_dict:
-        #     if 
+        units_dict = defaultdict(list)
+        for (channel, instance) in instance_dict.items():
+            units_dict[instance.get_info()[1]].append(channel)
+        num_units = len(units_dict)
         #---------------------Make subplot for each unit-------------------------#        
         fig = plt.figure()
-        ax = fig.add_subplot(111)
-        for channel in instance_dict:
-            instance_dict[channel].plot_single(ax = ax)
+        for index, same_unit_channels in enumerate(units_dict.values):
+            ax = fig.add_subplot(num_units, 1, index + 1)
+            for channel in same_unit_channels:
+                instance_dict[channel].plot_single(ax = ax)
+        #------------------------------------------------------------------------#
+        # fig = plt.figure()
+        # ax = fig.add_subplot(111)
+        # for channel in instance_dict:
+        #     instance_dict[channel].plot_single(ax = ax)
         ax.autoscale_view()
         fig.autofmt_xdate()        
         plt.legend(loc='lower left').get_frame().set_alpha(.5)
@@ -51,8 +60,14 @@ class P2ACNETGroup(object):
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
         plt.show()
-        return
-            
+        return fig
+
+    def get_group_data(self):
+        instance_dict = self.run_group()
+        data_dict = {}
+        for channel in instance_dict:
+            data_dict[channel] = instance_dict[channel].get_data()
+        return data_dict
             
 class P2ACNET(object):
     '''
@@ -77,16 +92,17 @@ class P2ACNET(object):
 
     def _send_query(self):
         #------------First send info request--------------------------#
-        print "\tSending query for", self.channel, "to ACNET..."
+        print "\t" + self.channel
+        print "\t" + "=" * 50
         info_url = 'http://www-ad.fnal.gov/cgi-bin/acl.pl?acl=show+' + self.channel + '/text/units/FTD'
         info_query = requests.get(info_url)
         info_content = info_query.content.splitlines()
         self.channel_desc = info_content[0][21:].strip()
         self.units = info_content[1][21:].strip()
         self.freq = info_content[2][25:32].strip()
-        print "\t\t" + self.channel + " Description: " + self.channel_desc
-        print "\t\t" + self.channel + " Unit: " + self.units
-        print "\t\t" + self.channel + " Frequency: " + self.freq
+        print "\t\t" + "Description: " + self.channel_desc
+        print "\t\t" + "Unit: " + self.units
+        print "\t\t" + "Frequency: " + self.freq
         #------------Then send data request---------------------------#
         get_url = 'http://www-ad.fnal.gov/cgi-bin/acl.pl?acl=logger_get/double/node=' \
             + self.node + '/start=' + self.start_time + '/end='+ self.end_time + '+' + self.channel
@@ -107,7 +123,6 @@ class P2ACNET(object):
         (instead of loading the whole response into memory and then performing operations on it). It returns
         an array of the time-value pairs for the requested channel, where the times are date-time objects.
         '''
-        print "\tParsing returned content for", self.channel
         data_list = []
         for element in self.r.iter_lines():
             single_datetime = element[:24]
@@ -117,7 +132,15 @@ class P2ACNET(object):
             data_list.append([datetime_el, value_el])
         self.data_array = np.array(data_list)
         print "\t\tNumber of returned time-value pairs:", self.data_array.shape[0]
+        print ""
         return self.data_array
+
+    def get_data(self):
+        return self.data_array
+
+    def get_info(self):
+        info_array = np.array([self.channel_desc, self.units, self.freq])
+        return info_array
 
     def plot_single(self, ax=None):
         '''
@@ -136,16 +159,21 @@ class P2ACNET(object):
         return
     
 if __name__ == '__main__':
-    #-------------Test multiple channels using P2ACNETGroup-----------#
-    # channel_list = ['E:TCIP', 'E:TNIP0', 'E:TNIP1', 'E:TNESIP']
-    # # channel_list = ['G:OUTTMP', 'G:WCHILL', 'G:HEATIX', 'G:DEWPNT']
-    # query1 = P2ACNETGroup(channel_list, '20-OCT-2012-5:30', '24-OCT-2012-12:30')
-    # plot = query1.plot_group(query1.run_group())
+    #-------------Test multiple ;channels using P2ACNETGroup-----------#
+    TIFO_list = ['E:TCIP', 'E:TNIP0', 'E:TNIP1', 'E:TNESIP', 'E:TEIP0', 'E:TEIP1', 'E:TEESIP']
+    LIFO_list = ['E:LCIP', 'E:LNIP0', 'E:LNIP1', 'E:LNESIP', 'E:LEIP0', 'E:LEIP1', 'E:LEESIP']
+    Temp_env = ['G:OUTTMP', 'G:WCHILL', 'G:HEATIX', 'G:DEWPNT']
+    start_time = '24-OCT-2012-17:30'
+    end_time = 'Now'
+    query = P2ACNETGroup(TIFO_list, start_time, end_time)
+    plot = query.plot_group()
+    # data = query.get_group_data()
+    # print data
     
     #------Test single plot-----------#
-    channel = 'E:HTC05'
-    start_time = '10-OCT-2012-12:30'
-    end_time = '17-OCT-2012-14:30'
-    instance = P2ACNET(channel, start_time, end_time)
-    plot = instance.plot_single()
-    plt.show()
+    # channel = 'E:HTC05'
+    # start_time = '10-OCT-2012-12:30'
+    # end_time = '17-OCT-2012-14:30'
+    # instance = P2ACNET(channel, start_time, end_time)
+    # plot = instance.plot_single()
+    # plt.show()

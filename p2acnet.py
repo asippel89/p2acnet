@@ -8,8 +8,8 @@ from collections import defaultdict
 
 class P2ACNETGroup(object):
     '''
-    This class acts like a factory, creating instances of the P2ACNET class for each channel in channel_list and
-    recording/displaying the results.
+    This class acts like a factory, creating instances of the P2ACNET class for each channel in channel_list. It creates
+    a dictionary of channel:instance pairs, which are used by plot_group and get_group_data.
     '''
 
     def __init__(self, channel_list, start_time, end_time):
@@ -28,12 +28,13 @@ class P2ACNETGroup(object):
             instance_dict[channel] = new_instance
         return instance_dict
 
-    def plot_group(self, title="", ylabel=""):
+    def plot_group(self, title=""):
         '''
         This method iterates over the instance_dict, calling the plot_single method of the P2ACNET class for each instance
         of that class in the dictionary (basically each channel). The resulting plot has automatically scaled dates as well
-        as a legend which shows the channels. A title and y-label can be supplied, though in future versions I hope to include
-        automatic y-axis labeling based on queried channel units (along with subplots for channels of different units).
+        as a legend which shows the channels. This method has logic to make new subplots based on the units of each channel 
+        that have been queried. This is done by creating a dictionary of Units:Channel_list pairs and looping over the
+        distinct units. A title string can be supplied.
         '''
         instance_dict = self.run_group()
         #-------------Decide How Many Subplots Based on Units--------------------#
@@ -43,26 +44,27 @@ class P2ACNETGroup(object):
         num_units = len(units_dict)
         #---------------------Make subplot for each unit-------------------------#        
         fig = plt.figure()
-        for index, same_unit_channels in enumerate(units_dict.values):
+        for index, key in enumerate(units_dict):
             ax = fig.add_subplot(num_units, 1, index + 1)
-            for channel in same_unit_channels:
+            for channel in units_dict[key]:
                 instance_dict[channel].plot_single(ax = ax)
-        #------------------------------------------------------------------------#
-        # fig = plt.figure()
-        # ax = fig.add_subplot(111)
-        # for channel in instance_dict:
-        #     instance_dict[channel].plot_single(ax = ax)
+                plt.ylabel(key)
+            if index == 0:
+                plt.title(title)
+            plt.legend(loc='lower left').get_frame().set_alpha(.5)
+        #-------------------------X Axis Label and Format------------------------#
         ax.autoscale_view()
         fig.autofmt_xdate()        
-        plt.legend(loc='lower left').get_frame().set_alpha(.5)
         xlabel = str("T1 ="+ self.start_time+ "      T2 ="+ self.end_time)
-        plt.title(title)
         plt.xlabel(xlabel)
-        plt.ylabel(ylabel)
         plt.show()
         return fig
 
     def get_group_data(self):
+        '''
+        This method returns a dictionary whose keys are channel names and values are data arrays of time/value
+        pairs.
+        '''
         instance_dict = self.run_group()
         data_dict = {}
         for channel in instance_dict:
@@ -136,6 +138,9 @@ class P2ACNET(object):
         return self.data_array
 
     def get_data(self):
+        '''
+        Simply returns the data. Mainly used by get_group_data in the P2ACNETGroup class.
+        '''
         return self.data_array
 
     def get_info(self):
@@ -159,14 +164,15 @@ class P2ACNET(object):
         return
     
 if __name__ == '__main__':
-    #-------------Test multiple ;channels using P2ACNETGroup-----------#
+    #-------------Test multiple channels using P2ACNETGroup-----------#
     TIFO_list = ['E:TCIP', 'E:TNIP0', 'E:TNIP1', 'E:TNESIP', 'E:TEIP0', 'E:TEIP1', 'E:TEESIP']
     LIFO_list = ['E:LCIP', 'E:LNIP0', 'E:LNIP1', 'E:LNESIP', 'E:LEIP0', 'E:LEIP1', 'E:LEESIP']
     Temp_env = ['G:OUTTMP', 'G:WCHILL', 'G:HEATIX', 'G:DEWPNT']
+    units_test_list = ['E:TCIP', 'E:TNIP0', 'E:TNIP1', 'E:TNESIP', 'E:TEIP0', 'E:TEIP1', 'E:TEESIP', 'G:OUTTMP', 'G:WCHILL']
     start_time = '24-OCT-2012-17:30'
     end_time = 'Now'
-    query = P2ACNETGroup(TIFO_list, start_time, end_time)
-    plot = query.plot_group()
+    query = P2ACNETGroup(units_test_list, start_time, end_time)
+    plot = query.plot_group('T IFO and Outside Temp/Wind Chill')
     # data = query.get_group_data()
     # print data
     

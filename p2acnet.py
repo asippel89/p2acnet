@@ -6,31 +6,34 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from collections import defaultdict
 
-class P2ACNETGroup(object):
+class P2ACNET(object):
     '''
-    This class acts like a factory, creating instances of the P2ACNET class for each channel in channel_list. It creates
+    This class acts like a factory, creating instances of the P2ACNETSingle class for each channel in channel_list. It creates
     a dictionary of channel:instance pairs, which are used by plot_group and get_group_data.
     '''
 
     def __init__(self, channel_list, start_time, end_time):
-        self.channel_list = channel_list
+        if type(channel_list) == str:
+            self.channel_list = [channel_list]
+        else:
+            self.channel_list = channel_list
         self.start_time = start_time
         self.end_time = end_time
         
     def run_group(self):
         '''
-        This method creates instances of the P2ACNET class for each channel in the list and places them in a dictionary.
-        One can access the P2ACNET class methods for each channel by looping over the dictionary.
+        This method creates instances of the P2ACNETSingle class for each channel in the list and places them in a dictionary.
+        One can access the P2ACNETSingle class methods for each channel by looping over the dictionary.
         '''
         instance_dict = {}
         for channel in self.channel_list:
-            new_instance = P2ACNET(channel, self.start_time, self.end_time)
+            new_instance = P2ACNETSingle(channel, self.start_time, self.end_time)
             instance_dict[channel] = new_instance
         return instance_dict
 
     def plot_group(self, title=""):
         '''
-        This method iterates over the instance_dict, calling the plot_single method of the P2ACNET class for each instance
+        This method iterates over the instance_dict, calling the plot_single method of the P2ACNETSingle class for each instance
         of that class in the dictionary (basically each channel). The resulting plot has automatically scaled dates as well
         as a legend which shows the channels. This method has logic to make new subplots based on the units of each channel 
         that have been queried. This is done by creating a dictionary of Units:Channel_list pairs and looping over the
@@ -71,12 +74,12 @@ class P2ACNETGroup(object):
             data_dict[channel] = instance_dict[channel].get_data()
         return data_dict
             
-class P2ACNET(object):
+class P2ACNETSingle(object):
     '''
     This class describes the content of a single channel query to Fermilab's ACNET. It accesses a time series
     from one of ACNET's data loggers by making an HTTP get request. The contents of the HTTP request is a short
     script written in Fermi's ACL scripting language (more information can be found here:
-    http://www-ad.fnal.gov/help/ul_clib/intro_acl.html
+    http://www-ad.fnal.gov/help/ul_clib/intro_acl.html)
     Using this class, one can retrieve and perform operations on this channel data from within python, without
     having to copy/paste or directly interact with ACNET's strange interface.
     '''
@@ -170,16 +173,17 @@ if __name__ == '__main__':
     Temp_env = ['G:OUTTMP', 'G:WCHILL', 'G:HEATIX', 'G:DEWPNT']
     units_test_list = ['E:TCIP', 'E:TNIP0', 'E:TNIP1', 'E:TNESIP', 'E:TEIP0', 'E:TEIP1', 'E:TEESIP', 'G:OUTTMP', 'G:WCHILL']
     other_channel_test = ['E:HADC02', 'E:HADC03', 'E:HADC01']
+    single_channel = 'E:TCIP'
     start_time = '24-OCT-2012-17:30'
-    end_time = '26-OCT-2012-18:00'
-    query = P2ACNETGroup(other_channel_test, start_time, end_time)
-    plot = query.plot_group('T IFO and Outside Temp/Wind Chill')
+    end_time = '28-OCT-2012-22:00'
+    query = P2ACNET(single_channel, start_time, end_time)
+    plot = query.plot_group('T IFO Since Being Connected to ACNET')
     # data = query.get_group_data()
     
     #------Test single plot-----------#
     # channel = 'E:HTC05'
     # start_time = '10-OCT-2012-12:30'
     # end_time = '17-OCT-2012-14:30'
-    # instance = P2ACNET(channel, start_time, end_time)
+    # instance = P2ACNETSingle(channel, start_time, end_time)
     # plot = instance.plot_single()
     # plt.show()

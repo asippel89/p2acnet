@@ -169,12 +169,12 @@ if __name__ == '__main__':
     LIFO_list = ['E:LCIP', 'E:LNIP0', 'E:LNIP1', 'E:LNESIP', 'E:LEIP0', 'E:LEIP1', 'E:LEESIP']
     Temp_env = ['G:OUTTMP', 'G:WCHILL', 'G:HEATIX', 'G:DEWPNT']
     units_test_list = ['E:TCIP', 'E:TNIP0', 'E:TNIP1', 'E:TNESIP', 'E:TEIP0', 'E:TEIP1', 'E:TEESIP', 'G:OUTTMP', 'G:WCHILL']
+    other_channel_test = ['E:HADC02', 'E:HADC03', 'E:HADC01']
     start_time = '24-OCT-2012-17:30'
-    end_time = 'Now'
-    query = P2ACNETGroup(units_test_list, start_time, end_time)
+    end_time = '26-OCT-2012-18:00'
+    query = P2ACNETGroup(other_channel_test, start_time, end_time)
     plot = query.plot_group('T IFO and Outside Temp/Wind Chill')
     # data = query.get_group_data()
-    # print data
     
     #------Test single plot-----------#
     # channel = 'E:HTC05'

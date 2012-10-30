@@ -176,7 +176,7 @@ if __name__ == '__main__':
     single_channel = 'E:TCIP'
     start_time = '24-OCT-2012-17:30'
     end_time = '28-OCT-2012-22:00'
-    query = P2ACNET(LIFO_list, start_time, end_time)
+    query = P2ACNET(single_channel, start_time, end_time)
     plot = query.plot_group('L IFO Since Being Connected to ACNET')
     # data = query.get_group_data()
     

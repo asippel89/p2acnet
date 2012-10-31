@@ -19,15 +19,40 @@ class P2ACNET(object):
             self.channel_list = channel_list
         self.start_time = start_time
         self.end_time = end_time
+
+    def _connection_check(self):
+
+        dummy_url = 'http://www-ad.fnal.gov/cgi-bin/acl.pl?show+G:OUTTMP/text'
+        connection_query = requests.get(dummy_url)
+        if connection_query.status_code == 403:
+            raise AccessError(2, 'Access Forbidden')
+
         
     def run_group(self):
         '''
         This method creates instances of the P2ACNETSingle class for each channel in the list and places them in a dictionary.
         One can access the P2ACNETSingle class methods for each channel by looping over the dictionary.
         '''
+        #---------First Make Dummy Request to Check Connection-----------------#
+        try:
+            self._connection_check()
+        except AccessError as e:
+            print "ERROR:", e[1]
+            print "You must be connected to the Fermilab network for the connection to succeed. Please connect to network and try again."
+            raise SystemExit()
+        except requests.exceptions.ConnectionError:
+            print "Cannot make HTTP request. Are you connected to the internet?"
+            raise SystemExit()
+        #----------------Then start making channel queries---------------------#
         instance_dict = {}
         for channel in self.channel_list:
-            new_instance = P2ACNETSingle(channel, self.start_time, self.end_time)
+            try:
+                new_instance = P2ACNETSingle(channel, self.start_time, self.end_time)
+            except BadChannelError as e:
+                print "\t\tConnection Error:"
+                print "\t\t\t", e[1]
+                print "\t\tChannel query aborted"
+                pass
             instance_dict[channel] = new_instance
         return instance_dict
 
@@ -102,6 +127,8 @@ class P2ACNETSingle(object):
         info_url = 'http://www-ad.fnal.gov/cgi-bin/acl.pl?acl=show+' + self.channel + '/text/units/FTD'
         info_query = requests.get(info_url)
         info_content = info_query.content.splitlines()
+        if 'Invalid device name' in info_content[0]:
+            raise BadChannelError(1, info_content[0])
         self.channel_desc = info_content[0][21:].strip()
         self.units = info_content[1][21:].strip()
         self.freq = info_content[2][25:32].strip()
@@ -112,14 +139,7 @@ class P2ACNETSingle(object):
         get_url = 'http://www-ad.fnal.gov/cgi-bin/acl.pl?acl=logger_get/double/node=' \
             + self.node + '/start=' + self.start_time + '/end='+ self.end_time + '+' + self.channel
         self.r = requests.get(get_url)
-        # print "\t\tHTTP get status: ", self.r.status_code
-        # Uncomment to test HTTP error handling
-        # if int(self.r.status_code) != 200:
-        #     print "ERROR: There was a problem with accessing ACNET via HTTP"
-        #     print "See response error message:", self.r.raise_for_status() # Not sure if this is correct
-        #     raise SOME_ERROR # Need to figure out how to define this error, what to do afterwards
         print "\t\tHTTP data response content length:", len(self.r.content)
-        # print "HTTP error? ", r.raise_for_status()
         self._parse_query()
         
     def _parse_query(self):
@@ -166,6 +186,20 @@ class P2ACNETSingle(object):
         ax.plot_date(times, values, '-', label=self.channel)
         return
 
+class BadChannelError(Exception):
+        
+    def __init__(self, errno, msg):
+        self.args = (errno, msg)
+        self.errno = errno
+        self.msg = msg
+
+class AccessError(Exception):
+    
+    def __init__(self, errno, msg):
+        self.args = (errno, msg)
+        self.errno = errno
+        self.msg = msg
+
 if __name__ == '__main__':
     #-------------Test multiple channels using P2ACNETGroup-----------#
     TIFO_list = ['E:TCIP', 'E:TNIP0', 'E:TNIP1', 'E:TNESIP', 'E:TEIP0', 'E:TEIP1', 'E:TEESIP']
@@ -173,17 +207,9 @@ if __name__ == '__main__':
     Temp_env = ['G:OUTTMP', 'G:WCHILL', 'G:HEATIX', 'G:DEWPNT']
     units_test_list = ['E:TCIP', 'E:TNIP0', 'E:TNIP1', 'E:TNESIP', 'E:TEIP0', 'E:TEIP1', 'E:TEESIP', 'G:OUTTMP', 'G:WCHILL']
     other_channel_test = ['E:HADC02', 'E:HADC03', 'E:HADC01']
-    single_channel = 'E:TCIP'
+    bad_channel_list = ['E:TCIP', 'Bad_Channel', 'E:TNESIP']
     start_time = '24-OCT-2012-17:30'
     end_time = '28-OCT-2012-22:00'
-    query = P2ACNET(single_channel, start_time, end_time)
+    query = P2ACNET(units_test_list, start_time, end_time)
     plot = query.plot_group('L IFO Since Being Connected to ACNET')
     # data = query.get_group_data()
-    
-    #------Test single plot-----------#
-    # channel = 'E:HTC05'
-    # start_time = '10-OCT-2012-12:30'
-    # end_time = '17-OCT-2012-14:30'
-    # instance = P2ACNETSingle(channel, start_time, end_time)
-    # plot = instance.plot_single()
-    # plt.show()

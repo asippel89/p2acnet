@@ -19,12 +19,29 @@ class P2ACNET(object):
             self.channel_list = channel_list
         self.start_time = start_time
         self.end_time = end_time
+
+    def _connection_check(self):
+        dummy_url = 'http://www-ad.fnal.gov/cgi-bin/acl.pl?show+G:OUTTMP/text'
+        connection_query = requests.get(dummy_url)
+        if connection_query.status_code == 403:
+            raise AccessError(2, 'Access Forbidden')
+
         
     def run_group(self):
         '''
         This method creates instances of the P2ACNETSingle class for each channel in the list and places them in a dictionary.
         One can access the P2ACNETSingle class methods for each channel by looping over the dictionary.
         '''
+        #---------First Make Dummy Request to Check Connection-----------------#
+        try:
+            self._connection_check()
+        except AccessError as e:
+            print "ERROR:", e[1]
+            print "You must be connected to the Fermilab network for the connection to succeed. Please connect to network and try again."
+            raise SystemExit()
+        except requests.exceptions.ConnectionError:
+            print "Cannot make HTTP request. Are you connected to the internet?"
+            raise SystemExit()
         instance_dict = {}
         for channel in self.channel_list:
             try:
@@ -109,7 +126,7 @@ class P2ACNETSingle(object):
         info_query = requests.get(info_url)
         info_content = info_query.content.splitlines()
         if 'Invalid device name' in info_content[0]:
-            raise ConnectionError(1, info_content[0])
+            raise BadChannelError(1, info_content[0])
         self.channel_desc = info_content[0][21:].strip()
         self.units = info_content[1][21:].strip()
         self.freq = info_content[2][25:32].strip()
@@ -167,8 +184,15 @@ class P2ACNETSingle(object):
         ax.plot_date(times, values, '-', label=self.channel)
         return
 
-class ConnectionError(Exception):
+class BadChannelError(Exception):
         
+    def __init__(self, errno, msg):
+        self.args = (errno, msg)
+        self.errno = errno
+        self.msg = msg
+
+class AccessError(Exception):
+    
     def __init__(self, errno, msg):
         self.args = (errno, msg)
         self.errno = errno

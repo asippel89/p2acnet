@@ -21,6 +21,7 @@ class P2ACNET(object):
         self.end_time = end_time
 
     def _connection_check(self):
+
         dummy_url = 'http://www-ad.fnal.gov/cgi-bin/acl.pl?show+G:OUTTMP/text'
         connection_query = requests.get(dummy_url)
         if connection_query.status_code == 403:
@@ -42,11 +43,12 @@ class P2ACNET(object):
         except requests.exceptions.ConnectionError:
             print "Cannot make HTTP request. Are you connected to the internet?"
             raise SystemExit()
+        #----------------Then start making channel queries---------------------#
         instance_dict = {}
         for channel in self.channel_list:
             try:
                 new_instance = P2ACNETSingle(channel, self.start_time, self.end_time)
-            except ConnectionError as e:
+            except BadChannelError as e:
                 print "\t\tConnection Error:"
                 print "\t\t\t", e[1]
                 print "\t\tChannel query aborted"
@@ -208,6 +210,6 @@ if __name__ == '__main__':
     bad_channel_list = ['E:TCIP', 'Bad_Channel', 'E:TNESIP']
     start_time = '24-OCT-2012-17:30'
     end_time = '28-OCT-2012-22:00'
-    query = P2ACNET(bad_channel_list, start_time, end_time)
+    query = P2ACNET(units_test_list, start_time, end_time)
     plot = query.plot_group('L IFO Since Being Connected to ACNET')
     # data = query.get_group_data()

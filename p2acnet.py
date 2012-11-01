@@ -152,7 +152,7 @@ class P2ACNETSingle(object):
         for element in self.r.iter_lines():
             single_datetime = element[:24]
             single_value = element[25:]
-            datetime_el = mdates.date2num(dt.datetime.strptime(single_datetime, '%d-%b-%Y %H:%M:%S.%f'))
+            datetime_el = dt.datetime.strptime(single_datetime, '%d-%b-%Y %H:%M:%S.%f')
             value_el = float(single_value.strip())
             data_list.append([datetime_el, value_el])
         self.data_array = np.array(data_list)
@@ -181,7 +181,7 @@ class P2ACNETSingle(object):
             ax = fig.add_subplot(111)
             ax.autoscale_view()
             fig.autofmt_xdate()
-        times = self.data_array[:,0]
+        times = mdates.date2num(self.data_array[:,0])
         values = self.data_array[:,1]
         ax.plot_date(times, values, '-', label=self.channel)
         return
@@ -210,6 +210,7 @@ if __name__ == '__main__':
     bad_channel_list = ['E:TCIP', 'Bad_Channel', 'E:TNESIP']
     start_time = '24-OCT-2012-17:30'
     end_time = '28-OCT-2012-22:00'
-    query = P2ACNET(units_test_list, start_time, end_time)
-    plot = query.plot_group('L IFO Since Being Connected to ACNET')
-    # data = query.get_group_data()
+    query = P2ACNET(LIFO_list, start_time, '01-NOV-2012-15:00')
+    # plot = query.plot_group('L IFO Since Being Connected to ACNET')
+    data = query.get_group_data()
+    print data

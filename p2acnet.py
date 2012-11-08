@@ -209,8 +209,8 @@ if __name__ == '__main__':
     other_channel_test = ['E:HADC02', 'E:HADC03', 'E:HADC01']
     bad_channel_list = ['E:TCIP', 'Bad_Channel', 'E:TNESIP']
     start_time = '24-OCT-2012-17:30'
-    end_time = '28-OCT-2012-22:00'
-    query = P2ACNET(LIFO_list, start_time, '01-NOV-2012-15:00')
-    # plot = query.plot_group('L IFO Since Being Connected to ACNET')
-    data = query.get_group_data()
-    print data
+    end_time = '07-NOV-2012-12:00'
+    query = P2ACNET(TIFO_list, start_time, end_time)
+    plot = query.plot_group('L IFO Since Being Connected to ACNET')
+    # data = query.get_group_data()
+    # print data

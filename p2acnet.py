@@ -114,7 +114,10 @@ class P2ACNETSingle(object):
         This method initializes important instance variables and sends the HTTP request to ACNET. Future versions
         will include more advanced error handling.
         '''
-        self.channel = channel
+        if "=" in channel:
+            self.channel, self.channel_label = channel.split('=')
+        else:
+            self.channel = channel
         self.start_time = start_time
         self.end_time = end_time
         self.node = node
@@ -176,6 +179,10 @@ class P2ACNETSingle(object):
         on the x-axis. The ax option is used in the P2ACNET class to combine the plots for several
         channels.
         '''
+        if self.channel_label:
+            label = self.channel_label
+        else:
+            label = self.channel
         if ax is None:            
             fig = plt.figure()
             ax = fig.add_subplot(111)
@@ -183,7 +190,7 @@ class P2ACNETSingle(object):
             fig.autofmt_xdate()
         times = mdates.date2num(self.data_array[:,0])
         values = self.data_array[:,1]
-        ax.plot_date(times, values, '-', label=self.channel)
+        ax.plot_date(times, values, '-', label=label)
         return
 
 class BadChannelError(Exception):

@@ -1,4 +1,4 @@
-To ensure up-to-date documentation, see cmbpol.uchicago.edu/~asippel/WorkLog/projects/p2acnet.html
+To ensure up-to-date documentation, see home.uchicago.edu/~asippel/projects/p2acnet.html
 
 .. _p2acnet:
 
@@ -38,7 +38,7 @@ How to Use
 Necessary Packages
 ~~~~~~~~~~~~~~~~~~
 
-This module makes use of the following packages, each of which need to be installed:
+This module makes use of the following packages, each of which need to be installed in order for it to run correctly:
 
 * Requests: `Online Documentation <http://docs.python-requests.org/en/latest/>`_
 * Numpy
@@ -51,11 +51,16 @@ Getting Started
 
 **Obtaining the Files**
 
-There exists a git repository for anyone with ssh access to cmbpol at cmbpol.uchicago.edu/Users/asippel/public/p2acnet/p2acnet.git
+There exists a git repository for anyone with ssh access to dorothy at dorothy.fnal.gov/git/p2acnet/
 
 One can clone this repository by entering the following in the terminal::
 
-	git clone username@cmbpol.uchicago.edu:/Users/asippel/public/p2acnet/p2acnet.git
+	git clone username@dorothy.fnal.gov:/git/p2acnet
+
+I have also made a repository on GitHub for those who don't have access to cmbpol. Simply clone from git@github.com:asippel89/p2acnet.git::
+
+  git clone git@github.com:asippel89/p2acnet.git
+
 
 **Using the Module**
 
@@ -63,7 +68,7 @@ The only necessary file is p2acnet.py. Place this in your working directory. The
 
 	if __name__ == '__main__':
 
-to suit your needs. Alternatively, it can be imported and used in a separate script by instantiating the relevant classes (see examples below).
+to suit your needs and then running python p2acnet.py from the command line. Alternatively, it can be imported and used in a separate script by instantiating the relevant classes (see examples below).
 
 **Required Input**
 
@@ -112,6 +117,12 @@ Resulting plot:
 	:height: 500px
 	:width: 600px
 
+.. note::
+   
+   One can also specify plot labels that will show up in the legend of the plot. This is done by setting the channel parameter to 'CHANNEL=LABEL'. So, in the above example if we wanted the temperature label (currently G:OUTTMP) to be different, we would change the units_test_list to be::
+
+     units_test_list = ['E:TCIP', 'E:TNIP0', 'E:TNIP1', 'E:TNESIP', 'E:TEIP0', 'E:TEIP1', 'E:TEESIP', 'G:OUTTMP=Outside Temp', 'G:WCHILL']
+
 **Get response data using get_group_data() method**::
 
 	import p2acnet
@@ -124,7 +135,22 @@ Resulting plot:
 
 The get_group_data() method of the P2ACNET class returns a dictionary whose keys are the individual channels and whose values
 are the returned data arrays for that channel. The shape of the data array is 2 columns (datetime element and value) and N rows 
-(the number of logged data values for that time frame and channel).
+(the number of logged data values for that time frame and channel). To work with the response data, one could (continuing the example above)::
+
+  EHADC01_data = data['E:HADC01']
+  EHADC01_data
+
+yields::
+  
+  array([[2012-10-24 17:30:00.733000, 1.356],
+    [2012-10-24 17:30:01.732000, 1.356],
+    [2012-10-24 17:30:02.732000, 1.355],
+    ..., 
+    [2012-10-26 17:59:57.513000, 1.356],
+    [2012-10-26 17:59:58.513000, 1.357],
+    [2012-10-26 17:59:59.512000, 1.356]], dtype=object)
+
+The datetime entries in the array (1st column) are normal python datetime objects, and the 2nd column are the returned data values.
 	
 Holometer-Relevant Information
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -181,7 +207,6 @@ Future Directions
 
 Below is a list of items that will be implemented in future releases:
 
-* Basic error handling (mostly for HTTP connection issues)
 * Added logic to prevent slowdown for huge response sizes (use decimation)
 * Included Holometer-relevant methods
 * More readable x-axis for plots (use major and minor ticks)
@@ -192,6 +217,29 @@ Development
 -----------
 
 This section will be updated as development is being done. Major updates will be have their own subsections describing the changes.
+
+Tuesday Nov. 27, 2012
+~~~~~~~~~~~~~~~~~~~~~
+
+Proposal to change the naming scheme and hierarchy of the p2acnet module:
+
+* Clean up current code
+
+  - Change the way the error handling is done ("It is better to ask forgiveness...")
+  - Set up to allow extraneous http requests to be passed (better implementation than the speed mode)
+* Turn p2acnet into a package with separate modules for different functions related to accessing data from ACNET
+
+  - Logger functionality: Access an ACNET logger for a range of values for certain channels
+
+    * Plot the results
+    * Return the data
+  - Instantaneous value access: get the instantaneous value of certain channels
+  - Long-Connection functionality: access/log instantaneous values
+
+    * Continuously plot the data
+    * Log the values, build data sets
+    * Create a warning system that analyzes data and can notify user if outside certain range (seems Holometer specific)
+* Create GUI for p2acnet that can implement each of these new features
 
 Tuesday Oct. 23, 2012
 ~~~~~~~~~~~~~~~~~~~~~

@@ -79,6 +79,8 @@ class P2ACNET(object):
                 plt.ylabel(key)
             if index == 0:
                 plt.title(title)
+            if 'TORR' in key:
+                ax.set_yscale('log')
             plt.legend(loc='lower left').get_frame().set_alpha(.5)
         #-------------------------X Axis Label and Format------------------------#
         ax.autoscale_view()
@@ -118,6 +120,7 @@ class P2ACNETSingle(object):
             self.channel, self.channel_label = channel.split('=')
         else:
             self.channel = channel
+            self.channel_label = False
         self.start_time = start_time
         self.end_time = end_time
         self.node = node
